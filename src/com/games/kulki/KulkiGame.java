@@ -3,6 +3,7 @@ import java.util.Random;
 import android.graphics.Color;
 import android.util.Log;
 import android.graphics.Point;
+import java.util.ArrayList;
 
 class Ball
 {
@@ -64,6 +65,8 @@ public class KulkiGame
 	private static final int INITBALLS = 3;
 	private static final int MININLINE = 5;
 
+	public enum Direction {LEFT, RIGTH, UP, DOWN};
+
 	private Ball [][] _board = new Ball[WIDTH][HEIGHT];
 	private Point _selected = new Point();
 	private int _amount;
@@ -105,7 +108,21 @@ public class KulkiGame
 		}
 	}
 
-	private boolean canMove(Point from, Point to)
+	private ArrayList<Direction> genPath(int [][]tab, Point from, int start)
+	{
+		ArrayList<Direction> path = new ArrayList<Direction>();
+		int x = from.x, y = from.y;
+		for(int no = start; no >= 1; no--)
+		{
+			if(x-1>=0 && tab[x-1][y] == no)     {path.add(Direction.LEFT); x--; continue;}
+			if(x+1<WIDTH && tab[x+1][y] == no)  {path.add(Direction.RIGTH); x++; continue;}
+			if(y-1>=0 && tab[x][y-1] == no)     {path.add(Direction.UP); y--; continue;}
+			if(y+1<HEIGHT && tab[x][y+1] == no) {path.add(Direction.DOWN); y++; continue;}
+		}
+		return path;
+	}
+
+	private ArrayList<Direction> canMove(Point from, Point to)
 	{
 		int [][] tmp = new int[WIDTH][HEIGHT];
 
@@ -124,16 +141,16 @@ public class KulkiGame
 					if(tmp[i][j] != p) continue;
 
 					if(i-1>=0)
-						if(i-1 == from.x && j == from.y) return true;
+						if(i-1 == from.x && j == from.y) return genPath(tmp, from, p);
 						else if(tmp[i-1][j] == 0) {tmp[i-1][j]=p+1; found=true;}
 					if(i+1<WIDTH)
-						if(i+1 == from.x && j == from.y) return true;
+						if(i+1 == from.x && j == from.y) return genPath(tmp, from, p);
 						else if(tmp[i+1][j] == 0) {tmp[i+1][j]=p+1; found=true;}
 					if(j-1>=0)
-						if(i == from.x && j-1 == from.y) return true;
+						if(i == from.x && j-1 == from.y) return genPath(tmp, from, p);
 						else if(tmp[i][j-1] == 0) {tmp[i][j-1]=p+1; found=true;}
 					if(j+1<HEIGHT)
-						if(i == from.x && j+1 == from.y) return true;
+						if(i == from.x && j+1 == from.y) return genPath(tmp, from, p);
 						else if(tmp[i][j+1] == 0) {tmp[i][j+1]=p+1; found=true;}
 				}
 			if(!found) break;
@@ -143,13 +160,29 @@ public class KulkiGame
 		/* 	Log.d("qqq", tmp[0][i]+", "+tmp[1][i]+", "+tmp[2][i]+", "+tmp[3][i]+", "+ */
 		/* 		tmp[4][i]+", "+tmp[5][i]+", "+tmp[6][i]+", "+tmp[7][i]+", "+ tmp[8][i]); */
 
-		return false;
+		return null;
 	}
 
-	private void move(Point from, Point to)
+	private void move(Point from, Point to, ArrayList<Direction> path)
 	{
-		value(to.x, to.y).set(value(from.x, from.y));
-		value(from.x, from.y).clean();
+		/* value(to.x, to.y).set(value(from.x, from.y)); */
+		/* value(from.x, from.y).clean(); */
+		int x=0, y=0, nx = from.x, ny = from.y;
+		for(Direction s : path)
+		{
+			switch(s)
+			{
+				case LEFT: x = nx; y = ny; nx--; break;
+				case RIGTH: x = nx; y = ny; nx++; break;
+				case UP: x = nx; y = ny; ny--; break;
+				case DOWN: x = nx; y = ny; ny++; break;
+			}
+			value(nx, ny).set(value(x,y));
+			value(x,y).clean();
+
+			try{Thread.sleep(300);}
+			catch(InterruptedException e){}
+		}
 	}
 
 	private int calculatePoints(int x, int y)
@@ -268,9 +301,10 @@ public class KulkiGame
 
 		if(_selected.x == -1) return; // Nothing selected
 
-		if(!canMove(_selected, new Point(x,y))) return;
+		ArrayList<Direction> path = canMove(_selected, new Point(x,y));
+		if(path == null) return;
 		
-		move(_selected, new Point(x,y));
+		move(_selected, new Point(x,y), path);
 
 		if(calculatePoints(x,y) == 0)
 			shuffleNew();
