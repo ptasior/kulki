@@ -8,6 +8,7 @@ import android.view.SurfaceView;
 import android.graphics.*;
 import android.util.Log;
 import android.view.WindowManager;
+import android.content.res.Configuration;
 
 class GameThread extends Thread
 {
@@ -173,8 +174,13 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 	{
 		Paint bg = new Paint();
 		bg.setStyle(Paint.Style.FILL);
-		bg.setColor(Color.GRAY);
-		canvas.drawRect(0,0,size*9, size*9, bg);
+		bg.setColor(Color.DKGRAY);
+		canvas.drawRect(0,0,getWidth(), getHeight(), bg);
+
+		Paint brd = new Paint();
+		brd.setStyle(Paint.Style.FILL);
+		brd.setColor(Color.GRAY);
+		canvas.drawRect(0,0,size*9, size*9, brd);
 
 		/* canvas.drawBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher), 10, 10, null); */
 		Paint paint = new Paint();
@@ -199,14 +205,23 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 			}
 
 		Point s = game.selected();
-		if(s.x == -1) return;
 
 		Paint selected = new Paint();
 		selected.setStyle(Paint.Style.STROKE);
 		selected.setColor(Color.WHITE);
-			canvas.drawRect(s.x*size, s.y*size,
+
+		Point txtPoint;
+		if(getResources().getConfiguration().orientation ==
+												Configuration.ORIENTATION_LANDSCAPE)
+			txtPoint = new Point((int)size*9+5, 15);
+		else
+			txtPoint = new Point(5, (int)size*9+5);
+
+		canvas.drawText("Points:"+game.points(), txtPoint.x, txtPoint.y, selected);
+
+		if(s.x == -1) return;
+		canvas.drawRect(s.x*size, s.y*size,
 									(s.x+1)*size, (s.y+1)*size, selected);
-		/* Log.d("qqq", "repaint, cnt="+cnt); */
 	}
 }
 

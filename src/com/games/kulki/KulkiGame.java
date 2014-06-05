@@ -67,6 +67,7 @@ public class KulkiGame
 	private Ball [][] _board = new Ball[WIDTH][HEIGHT];
 	private Point _selected = new Point();
 	private int _amount;
+	private int _points;
 
 	KulkiGame()
 	{
@@ -85,6 +86,7 @@ public class KulkiGame
 				value(i,j).clean();
 
 		_amount = 0;
+		_points = 0;
 		shuffleNew();
 		_selected.set(-1, -1);
 	}
@@ -244,6 +246,7 @@ public class KulkiGame
 		else l = 0;
 
 		_amount -= h+v+r+l;
+		_points += h+v+r+l;
 		return h+v+r+l;
 	}
 
@@ -257,7 +260,9 @@ public class KulkiGame
 	{
 		if(!value(x,y).empty())
 		{
-			_selected.set(x,y);
+			/* if(x == _selected.x && y == _selected.y) _selected.set(-1, -1); */
+			if(_selected == new Point(x,y)) _selected.set(-1, -1);
+			else                            _selected.set(x,y);
 			return;
 		}
 
@@ -276,6 +281,11 @@ public class KulkiGame
 	public Point selected()
 	{
 		return _selected;
+	}
+
+	public int points()
+	{
+		return _points;
 	}
 }
 
