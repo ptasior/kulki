@@ -215,7 +215,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 												Configuration.ORIENTATION_LANDSCAPE)
 			txtPoint = new Point((int)size*9+5, 15);
 		else
-			txtPoint = new Point(5, (int)size*9+5);
+			txtPoint = new Point(5, (int)size*9+15);
 
 		canvas.drawText("Points:"+game.points(), txtPoint.x, txtPoint.y, selected);
 

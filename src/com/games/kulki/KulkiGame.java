@@ -180,7 +180,7 @@ public class KulkiGame
 			value(nx, ny).set(value(x,y));
 			value(x,y).clean();
 
-			try{Thread.sleep(300);}
+			try{Thread.sleep(150);}
 			catch(InterruptedException e){}
 		}
 	}
@@ -293,9 +293,8 @@ public class KulkiGame
 	{
 		if(!value(x,y).empty())
 		{
-			/* if(x == _selected.x && y == _selected.y) _selected.set(-1, -1); */
-			if(_selected == new Point(x,y)) _selected.set(-1, -1);
-			else                            _selected.set(x,y);
+			if(_selected.equals(x, y)) _selected.set(-1, -1);
+			else                      _selected.set(x,y);
 			return;
 		}
 
