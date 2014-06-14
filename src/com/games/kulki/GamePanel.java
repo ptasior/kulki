@@ -9,6 +9,9 @@ import android.graphics.*;
 import android.util.Log;
 import android.view.WindowManager;
 import android.content.res.Configuration;
+import java.util.Random;
+import java.util.ArrayList;
+import android.os.SystemClock;
 
 class GameThread extends Thread
 {
@@ -73,50 +76,43 @@ class GameThread extends Thread
 
 public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 {
-	private KulkiGame game;
-	private float size = 0;
-	private GameThread thread = null;
+	private GameThread _thread = null;
+	private ArrayList<SceneItem> _items = new ArrayList<SceneItem>();
 
 	public GamePanel(Context context)
 	{
 		super(context);
-		game = new KulkiGame();
 
-		// adding the callback (this) to the surface holder to intercept events
+		/* Picture p = SceneItem.loadPicture(R.drawable.ic_launcher); */
+
+		/* for(int i = 0; i < 4; i++) */
+		/* 	items.add(new PulseAnim(p)); */
+
+		/* items.add(new MoveAnim(p, new Point(100, 200))); */
+
 		getHolder().addCallback(this);
-		// make the GamePanel focusable so it can handle events
 		setFocusable(true);
 	}
 
-	public void startGame()
+	public void startThread()
 	{
-		if(thread != null) return;
+		if(_thread != null) return;
 	
-		thread = new GameThread(this);
-		thread.startThread();
+		_thread = new GameThread(this);
+		_thread.startThread();
 	}
 
-	public void stopGame()
+	public void stopThread()
 	{
-		if(thread == null) return;
+		if(_thread == null) return;
 
-		thread.stopThread();
+		_thread.stopThread();
 
-		// Waiting for the thread to die by calling thread.join,
-		// repeatedly if necessary
-		boolean retry = true;
-		while (retry)
-		{
-			try
-			{
-				thread.join();
-				retry = false;
-			} 
-			catch (InterruptedException e)
-			{
-			}
-		}
-		thread = null;
+		while(true)
+			try {_thread.join(); break;}
+			catch(InterruptedException e) {}
+
+		_thread = null;
 	}
 
 	@Override
@@ -127,44 +123,21 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 	@Override
 	public void surfaceCreated(SurfaceHolder holder)
 	{
-		size = Math.min(getWidth(), getHeight())/ Math.max(game.WIDTH, game.HEIGHT);
-
 		/* setWillNotDraw(false); */
-		startGame();
+		startThread();
 	}
 
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder)
 	{
-		stopGame();
+		stopThread();
 	}
 
 	@Override
 	public boolean onTouchEvent(MotionEvent event)
 	{
-		/* if (event.getAction() == MotionEvent.ACTION_DOWN) */
-		/* { */
-		/* 	Paint paint = new Paint(); */
-		/* 	paint.setStyle(Paint.Style.FILL); */
-		/* 	paint.setColor(Color.GREEN); */
-		/* 	paint.setAntiAlias(true); */
-		/* 	Canvas c = getHolder().lockCanvas(); */
-		/* 	onDraw(c); */
-		/* 	c.drawCircle(event.getX(),event.getY(),5,paint); */
-		/* 	getHolder().unlockCanvasAndPost(c); */
-			/* c.drawCircle(event.getX(),event.getY(),5,paint); */
-			/* ((Activity)getContext()).finish(); */
-		/* } */
-
-		if(event.getX()<size*9 &&  event.getY()<size*9)
-			game.click((int)(event.getX()/size), (int)(event.getY()/size));
-		else
-			Log.d("qqq", "clililick x="+event.getX()+" y="+event.getY());
-
-		// Em, refresh
-		/* Canvas c = getHolder().lockCanvas(); */
-		/* onDraw(c); */
-		/* getHolder().unlockCanvasAndPost(c); */
+		for(SceneItem i: _items)
+			if(i.clicked((int)event.getX(), (int)event.getY())) break;
 
 		return super.onTouchEvent(event);
 	}
@@ -174,54 +147,39 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 	{
 		Paint bg = new Paint();
 		bg.setStyle(Paint.Style.FILL);
-		bg.setColor(Color.DKGRAY);
-		canvas.drawRect(0,0,getWidth(), getHeight(), bg);
+		bg.setColor(Color.WHITE);
 
-		Paint brd = new Paint();
-		brd.setStyle(Paint.Style.FILL);
-		brd.setColor(Color.GRAY);
-		canvas.drawRect(0,0,size*9, size*9, brd);
+		canvas.drawRect(0,0,canvas.getWidth(), canvas.getHeight(), bg);
+		for(SceneItem i: _items)
+			i.draw(canvas, (int)SystemClock.uptimeMillis());
+	}
 
-		/* canvas.drawBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.ic_launcher), 10, 10, null); */
-		Paint paint = new Paint();
-		paint.setStyle(Paint.Style.FILL);
-		paint.setAntiAlias(true);
+	public void addItem(SceneItem i)
+	{
+		_items.add(i);
+	}
 
-		Paint border = new Paint();
-		border.setStyle(Paint.Style.STROKE);
-		border.setColor(Color.BLACK);
+	/* public void getItem(SceneItem i) */
+	/* { */
+	/* 	_items.del(i); */
+	/* } */
 
-		int cnt = 0;
-		for(int i = 0; i < game.WIDTH; i++)
-			for(int j = 0; j < game.HEIGHT; j++)
-			{
-				canvas.drawRect(i*size, j*size, (i+1)*size, (j+1)*size, border);
-				if(game.value(i,j).empty()) continue;
+	/* public void delItem(SceneItem i) */
+	/* { */
+	/* 	_items.del(i); */
+	/* } */
 
-				cnt++;
-				paint.setColor(game.value(i,j).color());
-				canvas.drawCircle((float)(size*(i+0.5)), (float)(size*(j+0.5)),
-													(float)(size*0.4), paint);
-			}
+	public Picture loadPicture(int id)
+	{
+		Picture picture = new Picture();
 
-		Point s = game.selected();
+		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), id);
+		Canvas canvas = picture.beginRecording(bitmap.getWidth(), bitmap.getHeight());
+		Rect r = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+		canvas.drawBitmap(bitmap, r, r, null);
+		picture.endRecording();
 
-		Paint selected = new Paint();
-		selected.setStyle(Paint.Style.STROKE);
-		selected.setColor(Color.WHITE);
-
-		Point txtPoint;
-		if(getResources().getConfiguration().orientation ==
-												Configuration.ORIENTATION_LANDSCAPE)
-			txtPoint = new Point((int)size*9+5, 15);
-		else
-			txtPoint = new Point(5, (int)size*9+15);
-
-		canvas.drawText("Points:"+game.points(), txtPoint.x, txtPoint.y, selected);
-
-		if(s.x == -1) return;
-		canvas.drawRect(s.x*size, s.y*size,
-									(s.x+1)*size, (s.y+1)*size, selected);
+		return picture;
 	}
 }
 

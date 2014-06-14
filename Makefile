@@ -1,7 +1,7 @@
 all: build install
 
 build:
-	ant debug
+	ant -emacs -quiet debug
 
 install:
 	adb uninstall com.games.kulki
