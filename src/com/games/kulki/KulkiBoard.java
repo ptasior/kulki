@@ -5,59 +5,6 @@ import android.util.Log;
 import android.graphics.Point;
 import java.util.ArrayList;
 
-class Ball
-{
-	private static final int MAXCOLORS = 7;
-	private static final int EMPTY = 0;
-
-	private int _value;
-
-	Ball()
-	{
-		_value = EMPTY;
-	}
-
-	public boolean empty()
-	{
-		return _value == EMPTY;
-	}
-
-	public void clean()
-	{
-		_value = EMPTY;
-	}
-
-	public int color()
-	{
-		switch(_value)
-		{
-			case 1: return Color.RED;
-			case 2: return Color.GREEN;
-			case 3: return Color.BLUE;
-			case 4: return Color.YELLOW;
-			case 5: return Color.CYAN;
-			case 6: return Color.MAGENTA;
-			default: return Color.BLACK;
-		}
-	}
-
-	public void randColor()
-	{
-		Random generator = new Random();
-		_value = 1+generator.nextInt(MAXCOLORS-1);
-	}
-
-	public void set(Ball r)
-	{
-		_value = r._value;
-	}
-
-	public boolean eq(Ball r)
-	{
-		return _value == r._value;
-	}
-}
-
 public class KulkiBoard
 {
 	public static final int WIDTH = 9;
@@ -68,15 +15,19 @@ public class KulkiBoard
 	public enum Direction {LEFT, RIGTH, UP, DOWN};
 
 	private Ball [][] _board = new Ball[WIDTH][HEIGHT];
+	private Ball [] _nextBalls = new Ball[INITBALLS];
 	private Point _selected = new Point();
 	private int _amount;
 	private int _points;
 
-	KulkiBoard()
+	KulkiBoard(KulkiActivity act)
 	{
 		for(int i = 0; i < WIDTH; i++)
 			for(int j = 0; j < WIDTH; j++)
-				_board[i][j] = new Ball();
+				_board[i][j] = new Ball(act, i, j);
+
+		for(int i = 0; i < INITBALLS; i++)
+			_nextBalls[i] = new Ball(act, -i, 0);
 
 		restart();
 		Log.d("qqq", "Game started");
@@ -88,8 +39,12 @@ public class KulkiBoard
 			for(int j = 0; j < HEIGHT; j++)
 				value(i,j).clean();
 
+		for(int i = 0; i < INITBALLS; i++)
+			_nextBalls[i].clean();
+
 		_amount = 0;
 		_points = 0;
+		shuffleNew();
 		shuffleNew();
 		_selected.set(-1, -1);
 	}
@@ -97,15 +52,21 @@ public class KulkiBoard
 	void shuffleNew()
 	{
 		Random generator = new Random();
-		for(int i = 0; i < Math.min(INITBALLS, WIDTH*HEIGHT-_amount); i++)
+		for(int i = 0; i < INITBALLS && !_nextBalls[i].isEmpty(); i++)
 		{
-			int x = generator.nextInt(WIDTH);
-			int y = generator.nextInt(HEIGHT);
-			if(!value(x,y).empty()) {i--; continue;}
-			value(x,y).randColor();
+			int x = generator.nextInt(WIDTH),
+			    y = generator.nextInt(HEIGHT);
+
+			if(!value(x,y).isEmpty()) {i--; continue;}
+
+			value(x,y).set(_nextBalls[i]);
 			_amount++;
 			calculatePoints(x,y);
+			_nextBalls[i].clean();
 		}
+
+		for(int i = 0; i < Math.min(INITBALLS, WIDTH*HEIGHT-_amount); i++)
+			_nextBalls[i].randColor();
 	}
 
 	private ArrayList<Direction> genPath(int [][]tab, Point from, int start)
@@ -128,7 +89,7 @@ public class KulkiBoard
 
 		for(int i = 0; i < WIDTH; i++)
 			for(int j = 0; j < HEIGHT; j++)
-				tmp[i][j] = value(i,j).empty()?0:-1;
+				tmp[i][j] = value(i,j).isEmpty()?0:-1;
 
 		tmp[to.x][to.y] = 1;
 
@@ -182,8 +143,7 @@ public class KulkiBoard
 	public int calculatePoints(int x, int y)
 	{
 		/* Log.d("qqq", "CalcualtePoints x:"+x+" y:"+y); */
-		Ball checked = new Ball();
-		checked.set(value(x,y));
+		Ball checked = value(x,y);
 		int v = 1;
 		for(int i = y+1; i < WIDTH; i++)
 			if(!value(x,i).eq(checked)) break;
@@ -283,28 +243,6 @@ public class KulkiBoard
 		return _board[x][y];
 	}
 
-	/* public void click(int x, int y) */
-	/* { */
-	/* 	if(!value(x,y).empty()) */
-	/* 	{ */
-	/* 		if(_selected.equals(x, y)) _selected.set(-1, -1); */
-	/* 		else                      _selected.set(x,y); */
-	/* 		return; */
-	/* 	} */
-
-	/* 	if(_selected.x == -1) return; // Nothing selected */
-
-	/* 	ArrayList<Direction> path = canMove(_selected, new Point(x,y)); */
-	/* 	if(path == null) return; */
-	/* 	 */
-	/* 	move(_selected, new Point(x,y), path); */
-
-	/* 	if(calculatePoints(x,y) == 0) */
-	/* 		shuffleNew(); */
-
-	/* 	_selected.set(-1, -1); */
-	/* } */
-
 	public Point selected()
 	{
 		return _selected;
@@ -316,6 +254,14 @@ public class KulkiBoard
 		assert(y >= 0);
 		assert(x < WIDTH);
 		assert(y < HEIGHT);
+
+		Log.d("qqq", "selected, x:"+x+" y:"+y);
+
+		if(_selected.x != -1 && _selected.y != -1)
+			value(_selected.x, _selected.y).unselect();
+
+		if(x != -1 && y != -1)
+			value(x,y).select();
 
 		_selected.set(x,y);
 	}

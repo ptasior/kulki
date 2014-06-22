@@ -10,7 +10,6 @@ import com.games.kulki.*;
 public class KulkiActivity extends Activity
 {
 	KulkiGame game = null;
-	GamePanel panel = null;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -18,10 +17,8 @@ public class KulkiActivity extends Activity
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-		panel = new GamePanel(this);
-		setContentView(panel);
-
 		game = new KulkiGame(this);
+		setContentView(game);
 	}
 }
 

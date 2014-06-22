@@ -118,11 +118,20 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height)
 	{
+		Log.d("qqq", "surface changed");
+
+		for(SceneItem i: _items)
+			i.changed();
 	}
 
 	@Override
 	public void surfaceCreated(SurfaceHolder holder)
 	{
+		Log.d("qqq", "surface created");
+
+		for(SceneItem i: _items)
+			i.changed();
+
 		/* setWillNotDraw(false); */
 		startThread();
 	}
@@ -130,6 +139,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder)
 	{
+		Log.d("qqq", "surface destroyed");
 		stopThread();
 	}
 
@@ -152,6 +162,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 		canvas.drawRect(0,0,canvas.getWidth(), canvas.getHeight(), bg);
 		for(SceneItem i: _items)
 			i.draw(canvas, (int)SystemClock.uptimeMillis());
+
+		/* canvas.drawPicture(loadPicture(R.drawable.k1), new Rect(0,0,20,20)); */
 	}
 
 	public void addItem(SceneItem i)
@@ -171,6 +183,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 
 	public Picture loadPicture(int id)
 	{
+		Log.d("qqq", "Loading a picture");
 		Picture picture = new Picture();
 
 		Bitmap bitmap = BitmapFactory.decodeResource(getResources(), id);
@@ -180,6 +193,11 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 		picture.endRecording();
 
 		return picture;
+	}
+
+	public Bitmap loadBitmap(int id)
+	{
+		return BitmapFactory.decodeResource(getResources(), id);
 	}
 }
 

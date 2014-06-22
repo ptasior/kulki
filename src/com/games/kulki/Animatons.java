@@ -32,6 +32,20 @@ abstract class SceneItem
 	{
 		return false;
 	}
+
+	public void changed()
+	{
+	}
+
+	public void pos(Point p)
+	{
+		_pos = p;
+	}
+
+	public void size(Point p)
+	{
+		_size = p;
+	}
 }
 
 class StaticPicture extends SceneItem
